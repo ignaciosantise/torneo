@@ -80,7 +80,7 @@ El proyecto incluye 16 parejas famosas de la cultura pop:
 ### 🌐 Acceso Online (GitHub Pages)
 
 Puedes usar el generador directamente desde tu navegador visitando:
-**[https://tu-usuario.github.io/torneo](https://tu-usuario.github.io/torneo)**
+**[https://ignaciosantise.github.io/torneo](https://ignaciosantise.github.io/torneo)**
 
 ### 💻 Uso Local
 
