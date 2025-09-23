@@ -13,7 +13,7 @@ Un generador de llaves de torneo de eliminación simple, elegante y fácil de us
 
 ## 🚀 Cómo Usar
 
-1. **Abrir el archivo**: Simplemente abre `llaves_de_torneo_demo_simple.html` en tu navegador
+1. **Abrir el archivo**: Simplemente abre `index.html` en tu navegador
 2. **Agregar equipos**: 
    - Escribe el nombre del equipo
    - Opcionalmente agrega una URL de imagen
