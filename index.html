@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generador de Llaves de Torneo</title>
+  <style>
+    :root {
+      --bg: #0f172a;           /* slate-900 */
+      --panel: #111827;        /* gray-900 */
+      --muted: #94a3b8;        /* slate-400 */
+      --text: #e5e7eb;         /* gray-200 */
+      --primary: #22c55e;      /* green-500 */
+      --accent: #f59e0b;       /* amber-500 */
+      --card: #1f2937;         /* gray-800 */
+      --line: #334155;         /* slate-700 */
+      --error: #ef4444;        /* red-500 */
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -20%, #0b1225, var(--bg));
+      color: var(--text);
+    }
+    header {
+      padding: 16px 20px; position: sticky; top: 0; z-index: 10;
+      background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(15,23,42,.65) 70%, rgba(15,23,42,0));
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid #1e293b;
+      display:flex; align-items:center; gap:16px; flex-wrap: wrap;
+    }
+    header h1 { font-size: 18px; margin: 0; opacity: .95; }
+    .wrap { display:flex; gap:16px; flex-wrap: wrap; }
+    .card { background: var(--panel); border: 1px solid #1f2937; border-radius: 16px; padding: 14px; }
+    .controls { display:flex; gap:12px; flex-wrap: wrap; align-items: center; }
+    input[type="text"], input[type="url"] {
+      background: var(--card); border: 1px solid #334155; color: var(--text);
+      padding: 10px 12px; border-radius: 12px; outline: none; min-width: 220px;
+    }
+    input::placeholder { color: #94a3b8; }
+    .btn { cursor: pointer; border: 1px solid #374151; background: #0b1225; color: var(--text);
+      padding: 10px 14px; border-radius: 12px; transition: .2s ease; font-weight: 600;
+    }
+    .btn:hover { border-color: #475569; transform: translateY(-1px); }
+    .btn.primary { background: linear-gradient(180deg, #16a34a, #15803d); border-color: #065f46; }
+    .btn.warning { background: linear-gradient(180deg, #f59e0b, #d97706); border-color: #b45309; }
+    .btn.ghost { background: transparent; }
+
+    .grid { display:flex; align-items: stretch; gap: 28px; padding: 20px; overflow:auto; }
+    .round { display:flex; flex-direction: column; gap: 16px; min-width: 260px; }
+    .round-title { font-weight: 700; letter-spacing:.04em; color: var(--muted); margin: 0 0 6px 6px; font-size: 12px; text-transform: uppercase; }
+
+    .match { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 8px; position: relative; }
+    .team { display:flex; align-items:center; gap: 10px; padding: 8px; border-radius: 10px; cursor: pointer; border:1px solid transparent; position: relative; }
+    .team:hover { background: #0b122534; border-color: #334155; }
+    .team.winner { 
+      outline: 2px solid var(--primary); 
+      background: linear-gradient(135deg, #052e1a, #0b4d2c); 
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+      transform: scale(1.02);
+      transition: all 0.2s ease;
+    }
+    .team.loser  { opacity: .6; }
+    .bye { opacity: .6; font-style: italic; }
+    .seed { font-size: 11px; color: var(--muted); }
+    .name { font-weight: 600; }
+    .photo { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background:#111827; border:1px solid #334155; } .xbtn { margin-left:auto; background:transparent; border:0; color:#94a3b8; font-weight:700; cursor:pointer; padding:0 6px; border-radius:6px; } .xbtn:hover{ color:#e5e7eb; background:#1f2937; }
+
+    .connector {
+      position: absolute; right: -14px; top: 50%; width: 14px; height: 2px; background: var(--line);
+    }
+    .connector:after { content: ""; position: absolute; right: 0; top: -24px; height: 50px; width: 2px; background: var(--line); }
+
+    .final { border: 2px dashed var(--accent); }
+
+    .champion { font-size: 22px; font-weight: 800; letter-spacing:.02em; }
+    .muted { color: var(--muted); }
+
+    .form { display:flex; gap:8px; flex-wrap: wrap; }
+    .teams-list { display:flex; flex-wrap: wrap; gap:8px; margin-top:8px; }
+    .chip { background: #0b1225; border: 1px solid #334155; padding:6px 10px; border-radius:999px; display:flex; align-items:center; gap:8px; }
+    .chip img { width:20px; height:20px; border-radius:50%; object-fit:cover; }
+    .chip button { border:0; background:transparent; color:#94a3b8; cursor:pointer; }
+
+    .footer { text-align:center; color: var(--muted); padding: 18px; border-top: 1px solid #1e293b; }
+    .error { color: var(--error); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏀 Generador de Llaves (Eliminación simple)</h1>
+    <div class="wrap">
+      <div class="card">
+        <form id="teamForm" class="form" autocomplete="off">
+          <input id="name" type="text" placeholder="Nombre del equipo" required />
+          <input id="photo" type="url" placeholder="URL de foto (opcional)" />
+          <button class="btn primary" type="submit">Agregar equipo</button>
+          <button class="btn ghost" type="button" id="exampleBtn">Cargar ejemplo</button>
+          <button class="btn warning" type="button" id="clearBtn">Limpiar</button>
+        </form>
+        <div id="teams" class="teams-list"></div>
+        <small class="muted">Tip: también podés pegar imágenes desde el portapapeles sobre el campo URL.</small>
+      </div>
+      <div class="card">
+        <div class="controls">
+          <button id="buildBtn" class="btn">Armar llaves</button>
+          <button id="resetWinnersBtn" class="btn ghost">Reiniciar ganadores</button>
+          <span id="error" class="error" hidden></span>
+        </div>
+        <div class="muted" style="margin-top:6px">Seleccioná un equipo en cada partido para avanzar. El campeón aparece a la derecha.</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="grid" id="grid"></main>
+  <div class="footer">
+    Hecho con ❤️
+  </div>
+
+<script>
+(function(){
+  // ---- Estado ----
+  let state = {
+    teams: [],     // [{id, name, photo}]
+    rounds: [],    // [[{a,b,winner}]]
+  };
+
+  const els = {
+    name: document.getElementById('name'),
+    photo: document.getElementById('photo'),
+    form: document.getElementById('teamForm'),
+    teams: document.getElementById('teams'),
+    grid: document.getElementById('grid'),
+    buildBtn: document.getElementById('buildBtn'),
+    resetWinnersBtn: document.getElementById('resetWinnersBtn'),
+    clearBtn: document.getElementById('clearBtn'),
+    exampleBtn: document.getElementById('exampleBtn'),
+    error: document.getElementById('error'),
+  };
+
+  // ---- Utilidades ----
+  const uid = () => Math.random().toString(36).slice(2,9);
+  const save = () => localStorage.setItem('bracket-state', JSON.stringify(state));
+  const load = () => {
+    try { const s = JSON.parse(localStorage.getItem('bracket-state')||'null'); if(s) state = s } catch {}
+  };
+  const resetWinners = () => {
+    // Reinicia el torneo a cero (elimina las llaves creadas)
+    state.rounds = [];
+    render();
+    save();
+  };
+
+  function nextPowerOfTwo(n){
+    if(n < 1) return 1;
+    let p = 1; while(p < n) p <<= 1; return p;
+  }
+
+  function teamChip(t){
+    const chip = document.createElement('div'); chip.className = 'chip';
+    const img = document.createElement('img'); img.src = t.photo || placeholder(t.name);
+    const span = document.createElement('span'); span.textContent = t.name;
+    const btn = document.createElement('button'); btn.textContent = '✕'; btn.title = 'Quitar';
+    btn.onclick = () => { state.teams = state.teams.filter(x=>x.id!==t.id); save(); renderTeams(); };
+    chip.append(img, span, btn); return chip;
+  }
+
+  function placeholder(text){
+    // Genera un avatar simple con iniciales via SVG dataURL (sin dependencias externas)
+    // Filtra solo letras y números para las iniciales, ignora símbolos como & ( )
+    const initials = text.split(/\s+/)
+      .map(w => w.replace(/[^a-zA-Z0-9]/g, '')) // Remueve símbolos
+      .filter(w => w.length > 0) // Filtra palabras vacías
+      .map(w => w[0])
+      .join('')
+      .slice(0,2)
+      .toUpperCase();
+    
+    // Genera un color consistente basado en el texto (hash simple)
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      hash = ((hash << 5) - hash + text.charCodeAt(i)) & 0xffffffff;
+    }
+    const colors = ['#f59e0b','#ef4444','#22c55e','#3b82f6','#8b5cf6','#06b6d4','#eab308'];
+    const bg = colors[Math.abs(hash) % colors.length];
+    
+    const svg = encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'>
+      <rect width='100%' height='100%' rx='24' fill='${bg}'/>
+      <text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle'
+        font-family='system-ui,Segoe UI,Roboto' font-size='96' fill='white' font-weight='800'>${initials}</text>
+    </svg>`);
+    return `data:image/svg+xml,${svg}`;
+  }
+
+  // ---- Construcción de llaves ----
+  function buildRounds(){
+    const n = state.teams.length;
+    if(n < 2){ error('Agregá al menos 2 equipos.'); return; }
+    const size = nextPowerOfTwo(n);
+    const withByes = [...state.teams];
+    while(withByes.length < size){ withByes.push({id: 'bye-'+uid(), name: 'BYE', photo: ''}); }
+
+    // Mezclado simple para no emparejar siempre igual
+    for(let i=withByes.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [withByes[i],withByes[j]]=[withByes[j],withByes[i]]; }
+
+    // Ronda 1
+    const first = [];
+    for(let i=0;i<withByes.length;i+=2){
+      first.push({ a: withByes[i], b: withByes[i+1], winner: null });
+    }
+
+    // Rondas siguientes: se llenan dinámicamente a medida que haya ganadores
+    const rounds = [first];
+    let matches = first.length;
+    while(matches > 1){ matches = Math.ceil(matches/2); rounds.push(new Array(matches).fill(null).map(()=>({a:null,b:null,winner:null}))); }
+
+    state.rounds = rounds;
+    autoAdvanceByes();
+    render(); save();
+  }
+
+  function autoAdvanceByes(){
+    // Avanza automáticamente cuando hay BYE en un partido
+    state.rounds.forEach((round, rIndex) => {
+      round.forEach((m, i) => {
+        const byeA = m.a && m.a.name === 'BYE';
+        const byeB = m.b && m.b.name === 'BYE';
+        if((byeA || byeB) && !(byeA && byeB)){
+          const winner = byeA ? m.b : m.a; m.winner = winner; propagateWinner(rIndex, i, winner);
+        }
+      });
+    });
+  }
+
+  function propagateWinner(rIndex, matchIndex, team){
+    const nextRound = state.rounds[rIndex+1]; if(!nextRound) return; // llegó a la final
+    const target = nextRound[Math.floor(matchIndex/2)];
+    if(matchIndex % 2 === 0) target.a = team; else target.b = team;
+  }
+
+  function recalculateFrom(startRound){
+    // Recalcula desde startRound hacia adelante en base a winners actuales
+    for(let r = startRound; r < state.rounds.length-1; r++){
+      const cur = state.rounds[r];
+      const next = state.rounds[r+1];
+      // limpia siguiente ronda
+      for(let i=0;i<next.length;i++){ next[i] = {a:null,b:null,winner: (next[i]&&next[i].winner)||null}; }
+      // coloca ganadores actuales
+      cur.forEach((m, i)=>{
+        if(m && m.winner){
+          const idx = Math.floor(i/2);
+          if(i % 2 === 0) next[idx].a = m.winner; else next[idx].b = m.winner;
+        }
+      });
+      // si había un winner que ya no aplica, lo limpiamos
+      next.forEach(m=>{ if(!(m.a&&m.winner&&m.winner.id===m.a.id) && !(m.b&&m.winner&&m.winner.id===m.b.id)) m.winner=null; });
+    }
+  }
+
+  // ---- Render ----
+  function renderTeams(){
+    els.teams.innerHTML = '';
+    state.teams.forEach(t => els.teams.appendChild(teamChip(t)));
+  }
+
+  function render(){
+    els.grid.innerHTML = '';
+    state.rounds.forEach((round, rIndex) => {
+      const col = document.createElement('section'); col.className = 'round';
+      const title = document.createElement('div'); title.className = 'round-title';
+      title.textContent = rIndex === state.rounds.length-1 ? 'Final' : 'Ronda ' + (rIndex+1);
+      col.appendChild(title);
+
+      round.forEach((m, i) => col.appendChild(renderMatch(m, rIndex, i)));
+      els.grid.appendChild(col);
+    });
+
+    // Campeón
+    const lastRound = state.rounds[state.rounds.length-1] || [];
+    const champ = lastRound[0]?.winner;
+    if(champ){
+      const col = document.createElement('section'); col.className = 'round';
+      const title = document.createElement('div'); title.className = 'round-title'; title.textContent = 'Campeón';
+      const box = document.createElement('div'); box.className = 'card final'; box.style.padding = '16px';
+      box.innerHTML = `<div class="champion">🥇 ${champ.name}</div>`;
+      const img = document.createElement('img'); img.src = champ.photo || placeholder(champ.name); img.style.width='64px'; img.style.height='64px'; img.style.borderRadius='50%'; img.style.marginTop='8px'; img.style.border='2px solid var(--line)';
+      box.appendChild(img);
+      col.append(title, box); els.grid.appendChild(col);
+    }
+  }
+
+  function renderMatch(match, rIndex, matchIndex){
+    const card = document.createElement('div'); card.className = 'match';
+    if(rIndex === state.rounds.length-1) card.classList.add('final');
+
+    const ta = teamRow(match, 'a', ()=>chooseWinner(match, 'a', rIndex, matchIndex), rIndex, matchIndex);
+    const tb = teamRow(match, 'b', ()=>chooseWinner(match, 'b', rIndex, matchIndex), rIndex, matchIndex);
+
+    card.appendChild(ta); card.appendChild(tb);
+
+    if(rIndex < state.rounds.length-1){
+      const conn = document.createElement('div'); conn.className = 'connector'; card.appendChild(conn);
+    }
+
+    return card;
+  }
+
+  function teamRow(match, side, onClick, rIndex, matchIndex){
+    const team = side==='a' ? match.a : match.b;
+    const row = document.createElement('div'); row.className = 'team';
+    if(!team){ row.classList.add('bye'); row.textContent = 'Esperando ganador…'; return row; }
+
+    const img = document.createElement('img'); img.className = 'photo'; img.src = team.photo || placeholder(team.name);
+    const name = document.createElement('div'); name.className = 'name'; name.textContent = team.name;
+
+    // Botón X para deshacer cuando este equipo es el ganador del partido
+    const isWinner = match.winner && team.id === match.winner.id;
+    const isLoser = match.winner && team.id !== match.winner.id;
+    
+    // Aplicar clases de estilo para ganador/perdedor
+    if(isWinner) row.classList.add('winner');
+    if(isLoser) row.classList.add('loser');
+    
+    const x = document.createElement('button'); x.className = 'xbtn'; x.title = 'Deshacer selección'; x.textContent = '✕';
+    x.onclick = (e)=>{ e.stopPropagation(); clearWinner(match, rIndex, matchIndex); };
+    if(!isWinner) x.style.visibility = 'hidden';
+
+    row.append(img, name, x);
+    row.onclick = onClick;
+    return row;
+  }
+
+  function chooseWinner(match, side, rIndex, matchIndex){
+    const chosen = side === 'a' ? match.a : match.b; if(!chosen) return;
+    match.winner = chosen;
+    propagateWinner(rIndex, matchIndex, chosen);
+    recalculateFrom(rIndex);
+    render(); save();
+  }
+
+  function clearWinner(match, rIndex, matchIndex){
+    match.winner = null;
+    recalculateFrom(rIndex);
+    render(); save();
+  }
+
+  function error(msg){ els.error.hidden = !msg; els.error.textContent = msg || ''; }
+
+  // ---- Eventos ----
+  els.form.addEventListener('submit', (e)=>{
+    e.preventDefault(); error('');
+    const name = els.name.value.trim();
+    const photo = els.photo.value.trim();
+    if(!name){ return error('Poné un nombre de equipo'); }
+    state.teams.push({ id: uid(), name, photo });
+    els.name.value = ''; els.photo.value='';
+    save(); renderTeams();
+  });
+
+  // Permitir pegar imágenes como dataURL
+  els.photo.addEventListener('paste', async (e)=>{
+    const item = [...e.clipboardData.items].find(i=>i.type.startsWith('image/'));
+    if(item){ const file = item.getAsFile(); const url = await fileToDataURL(file); els.photo.value = url; }
+  });
+  function fileToDataURL(file){ return new Promise(res=>{ const r = new FileReader(); r.onload = ()=>res(r.result); r.readAsDataURL(file); }); }
+
+  els.buildBtn.addEventListener('click', ()=>{ error(''); buildRounds(); });
+  els.resetWinnersBtn.addEventListener('click', ()=> resetWinners());
+  els.clearBtn.addEventListener('click', ()=>{ state = {teams:[], rounds:[]}; save(); renderTeams(); render(); });
+  els.exampleBtn.addEventListener('click', ()=>{
+    if(state.teams.length) return error('Ya hay equipos cargados. Usá "Limpiar" si querés empezar de cero.');
+    const demo = ['Messi & Antonela', 'Camilo & Evaluna', 'Spiderman & Mary Jane', 'Mike & Eleven (Stranger Things)', 'Troy & Gabriella (High School Musical)', 'Monica & Chandler (Friends)', 'Shrek & Fiona', 'Duki & Emilia', 'Tini & De Paul', 'Blair & Chuck (Gossip Girl)', 'Oriana & Dybala', 'Cosmo & Wanda (Los Padrinos Mágicos)', 'Violetta & León', 'Justin Bieber & Hailey', 'Zendaya & Tom Holland', 'Rapunzel y Flynn'];
+    state.teams = demo.map(n=>({ id: uid(), name: n, photo: '' }));
+    save(); renderTeams();
+  });
+
+  // ---- Carga inicial ----
+  load(); renderTeams(); render();
+})();
+</script>
+</body>
+</html>
