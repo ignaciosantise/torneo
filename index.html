@@ -368,7 +368,7 @@
   els.clearBtn.addEventListener('click', ()=>{ state = {teams:[], rounds:[]}; save(); renderTeams(); render(); });
   els.exampleBtn.addEventListener('click', ()=>{
     if(state.teams.length) return error('Ya hay equipos cargados. Usá "Limpiar" si querés empezar de cero.');
-    const demo = ['Messi & Antonela', 'Camilo & Evaluna', 'Spiderman & Mary Jane', 'Mike & Eleven (Stranger Things)', 'Troy & Gabriella (High School Musical)', 'Monica & Chandler (Friends)', 'Shrek & Fiona', 'Duki & Emilia', 'Tini & De Paul', 'Blair & Chuck (Gossip Girl)', 'Oriana & Dybala', 'Cosmo & Wanda (Los Padrinos Mágicos)', 'Violetta & León', 'Justin Bieber & Hailey', 'Zendaya & Tom Holland', 'Rapunzel y Flynn'];
+    const demo = ['Messi & Antonela', 'Camilo & Evaluna', 'Spiderman & Mary Jane', 'Mike & Eleven (Stranger Things)', 'Troy & Gabriella (High School Musical)', 'Monica & Chandler (Friends)', 'Shrek & Fiona', 'Duki & Emilia', 'Tini & De Paul', 'Blair & Chuck (Gossip Girl)', 'Oriana & Dybala', 'Ron y Hermione', 'Violetta & León', 'Justin Bieber & Hailey', 'Zendaya & Tom Holland', 'Rapunzel y Flynn'];
     state.teams = demo.map(n=>({ id: uid(), name: n, photo: '' }));
     save(); renderTeams();
   });
